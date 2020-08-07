@@ -430,7 +430,7 @@ class CMRunner(object):
             spark_jars=None,
         )
 
-        _pipeline_executor = Executor(config).standalone(True)
+        _pipeline_executor = Executor(config).standalone(True).set_verbose(self.options.verbose)
 
         self.logger.info(
             ">>> Start {} in the {} mode".format(ArgumentsOptions.MAIN_COMMAND, self.run_mode.value)
