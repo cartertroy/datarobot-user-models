@@ -7,6 +7,7 @@ from flask import request
 
 from mlpiper.components.restful.flask_route import FlaskRoute
 from mlpiper.components.restful_component import RESTfulComponent
+from mlpiper.components.restful.metric import Metric, MetricType, MetricRelation
 
 from datarobot_drum.drum.common import RunLanguage, URL_PREFIX_ENV_VAR_NAME, REGRESSION_PRED_COLUMN
 
@@ -23,6 +24,14 @@ class UwsgiServing(RESTfulComponent):
         self._verbose = self._logger.isEnabledFor(logging.DEBUG)
         self._run_language = None
 
+        self._total_predict_requests = Metric(
+            "mlpiper.restful.predict_requests",
+            title="Total number of stat requests",
+            metric_type=MetricType.COUNTER,
+            value_type=int,
+            metric_relation=MetricRelation.SUM_OF,
+        )
+
         self.info_json = {
             "python": "{}.{}.{}".format(
                 sys.version_info[0], sys.version_info[1], sys.version_info[2]
@@ -30,6 +39,7 @@ class UwsgiServing(RESTfulComponent):
             "worker_id": self.get_wid(),
         }
         self._predictor = None
+        self._predict_calls_count = 0
 
     def configure(self, params):
         """
@@ -108,4 +118,12 @@ class UwsgiServing(RESTfulComponent):
             response_json = {"message": "ERROR: " + ret_str}
             response_status = HTTP_422_UNPROCESSABLE_ENTITY
 
+        self._predict_calls_count += 1
+        self._total_predict_requests.increase()
         return response_status, response_json
+
+    def _get_stats_dict(self):
+        return {
+            "predict_calls_per_worker": self._predict_calls_count,
+            "predict_calls_total": self._total_predict_requests.get(),
+        }
