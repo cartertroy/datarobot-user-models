@@ -268,6 +268,26 @@ class CMRunnerArgsRegistry(object):
             )
 
     @staticmethod
+    def _reg_arg_max_workers(*parsers):
+        def type_callback(arg):
+            ret_val = int(arg)
+            if ArgumentsOptions.PRODUCTION not in sys.argv:
+                raise argparse.ArgumentTypeError(
+                    "can only be used in pair with {}".format(ArgumentsOptions.PRODUCTION)
+                )
+            if ret_val <= 0:
+                raise argparse.ArgumentTypeError("must be > 0")
+            return ret_val
+
+        for parser in parsers:
+            parser.add_argument(
+                "--max-workers",
+                type=type_callback,
+                default=None,
+                help="Max number of uwsgi workers in server production mode",
+            )
+
+    @staticmethod
     def _reg_arg_show_perf(*parsers):
         for parser in parsers:
             parser.add_argument(
@@ -463,6 +483,7 @@ class CMRunnerArgsRegistry(object):
         CMRunnerArgsRegistry._reg_arg_address(server_parser)
         CMRunnerArgsRegistry._reg_arg_threaded(server_parser)
         CMRunnerArgsRegistry._reg_arg_production_server(server_parser, parser_perf_test)
+        CMRunnerArgsRegistry._reg_arg_max_workers(server_parser, parser_perf_test)
         CMRunnerArgsRegistry._reg_arg_in_perf_mode_internal(server_parser)
         CMRunnerArgsRegistry._reg_arg_with_error_server(server_parser)
 

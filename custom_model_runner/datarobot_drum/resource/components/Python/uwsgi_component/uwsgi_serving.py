@@ -45,12 +45,12 @@ class UwsgiServing(RESTfulComponent):
         """
         @brief      It is called in within the 'deputy' context
         """
+        super(UwsgiServing, self).configure(params)
         self._logger.info(
             "Configure component with input params, name: {}, params: {}".format(
                 self.name(), params
             )
         )
-        self._params = params
         self._run_language = RunLanguage(params.get("run_language"))
 
     def load_model_callback(self, model_path, stream, version):
